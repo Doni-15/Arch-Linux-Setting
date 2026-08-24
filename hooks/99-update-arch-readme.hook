@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Updating Arch README and pushing backup to GitHub...
+When = PostTransaction
+Exec = /usr/local/bin/update-arch-readme-and-push

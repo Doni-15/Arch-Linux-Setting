@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+USER_NAME="doni-arch"
+DOC_DIR="/home/${USER_NAME}/Arch-System"
+README="${DOC_DIR}/README.md"
+
+mkdir -p "$DOC_DIR"
+
+EXPLICIT_OFFICIAL="${DOC_DIR}/packages-explicit-official.txt"
+EXPLICIT_FOREIGN="${DOC_DIR}/packages-explicit-foreign.txt"
+ALL_PACKAGES="${DOC_DIR}/packages-all.txt"
+PACMAN_RECENT="${DOC_DIR}/pacman-recent.log"
+
+AUTO_BLOCK="$(mktemp)"
+TMP_README="$(mktemp)"
+
+cleanup() {
+    rm -f "$AUTO_BLOCK" "$TMP_README"
+}
+trap cleanup EXIT
+
+pacman -Qqen | sort > "$EXPLICIT_OFFICIAL"
+pacman -Qqem | sort > "$EXPLICIT_FOREIGN" || true
+pacman -Qq | sort > "$ALL_PACKAGES"
+grep -E "installed|removed|upgraded|reinstalled" /var/log/pacman.log | tail -n 160 > "$PACMAN_RECENT" || true
+
+EXPLICIT_OFFICIAL_COUNT="$(wc -l < "$EXPLICIT_OFFICIAL")"
+EXPLICIT_FOREIGN_COUNT="$(wc -l < "$EXPLICIT_FOREIGN")"
+ALL_PACKAGES_COUNT="$(wc -l < "$ALL_PACKAGES")"
+
+{
+    echo "<!-- AUTO_PACKAGE_REPORT_START -->"
+    echo "## Auto Package Report"
+    echo
+    echo "Generated automatically after pacman transaction."
+    echo
+    echo "### Last Updated"
+    echo
+    echo '```txt'
+    date
+    echo '```'
+    echo
+    echo "### Package Count"
+    echo
+    echo "| Type | Count |"
+    echo "|---|---:|"
+    echo "| Explicit official packages | ${EXPLICIT_OFFICIAL_COUNT} |"
+    echo "| Explicit foreign/AUR packages | ${EXPLICIT_FOREIGN_COUNT} |"
+    echo "| All installed packages including dependencies | ${ALL_PACKAGES_COUNT} |"
+    echo
+    echo "### Explicit Official Packages"
+    echo
+    echo '```txt'
+    cat "$EXPLICIT_OFFICIAL"
+    echo '```'
+    echo
+    echo "### Explicit Foreign / AUR Packages"
+    echo
+    echo '```txt'
+    cat "$EXPLICIT_FOREIGN"
+    echo '```'
+    echo
+    echo "### Recent Pacman Transactions"
+    echo
+    echo '```txt'
+    cat "$PACMAN_RECENT"
+    echo '```'
+    echo
+    echo "### Current Disk Layout"
+    echo
+    echo '```txt'
+    lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS 2>/dev/null || true
+    echo '```'
+    echo
+    echo "### Current Kernel"
+    echo
+    echo '```txt'
+    uname -a
+    echo '```'
+    echo
+    echo "<!-- AUTO_PACKAGE_REPORT_END -->"
+} > "$AUTO_BLOCK"
+
+if [[ ! -f "$README" ]]; then
+    cat > "$README" <<'README_EOF'
+# Arch Linux KDE Plasma Clean Setup
+
+<!-- AUTO_PACKAGE_REPORT_START -->
+Auto package report belum dibuat.
+<!-- AUTO_PACKAGE_REPORT_END -->
+README_EOF
+fi
+
+if grep -q "<!-- AUTO_PACKAGE_REPORT_START -->" "$README" && grep -q "<!-- AUTO_PACKAGE_REPORT_END -->" "$README"; then
+    awk -v block_file="$AUTO_BLOCK" '
+        BEGIN {
+            while ((getline line < block_file) > 0) {
+                block = block line "\n"
+            }
+            close(block_file)
+        }
+        /<!-- AUTO_PACKAGE_REPORT_START -->/ {
+            printf "%s", block
+            skip = 1
+            next
+        }
+        /<!-- AUTO_PACKAGE_REPORT_END -->/ {
+            skip = 0
+            next
+        }
+        skip != 1 {
+            print
+        }
+    ' "$README" > "$TMP_README"
+
+    mv "$TMP_README" "$README"
+else
+    {
+        cat "$README"
+        echo
+        cat "$AUTO_BLOCK"
+    } > "$TMP_README"
+
+    mv "$TMP_README" "$README"
+fi
+
+chown -R "${USER_NAME}:${USER_NAME}" "$DOC_DIR"
