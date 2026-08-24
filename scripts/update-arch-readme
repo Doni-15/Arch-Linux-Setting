@@ -1,128 +1,104 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-USER_NAME="doni-arch"
-DOC_DIR="/home/${USER_NAME}/Arch-System"
-README="${DOC_DIR}/README.md"
+CONFIG_FILE="${ARCH_SNAPSHOT_CONFIG:-/etc/arch-snapshot.conf}"
 
-mkdir -p "$DOC_DIR"
+if [[ ! -r "$CONFIG_FILE" ]]; then
+    printf 'Konfigurasi tidak dapat dibaca: %s\n' "$CONFIG_FILE" >&2
+    exit 1
+fi
 
-EXPLICIT_OFFICIAL="${DOC_DIR}/packages-explicit-official.txt"
-EXPLICIT_FOREIGN="${DOC_DIR}/packages-explicit-foreign.txt"
-ALL_PACKAGES="${DOC_DIR}/packages-all.txt"
-PACMAN_RECENT="${DOC_DIR}/pacman-recent.log"
+if [[ "$EUID" -eq 0 ]]; then
+    config_owner="$(stat -c '%u' "$CONFIG_FILE")"
+    config_mode="$(stat -c '%a' "$CONFIG_FILE")"
 
-AUTO_BLOCK="$(mktemp)"
-TMP_README="$(mktemp)"
+    if [[ "$config_owner" -ne 0 ]] || (( (8#$config_mode & 8#022) != 0 )); then
+        printf 'Konfigurasi harus dimiliki root dan tidak writable oleh group/other.\n' >&2
+        exit 1
+    fi
+fi
 
-cleanup() {
-    rm -f "$AUTO_BLOCK" "$TMP_README"
-}
-trap cleanup EXIT
+# shellcheck source=/dev/null
+source "$CONFIG_FILE"
 
-pacman -Qqen | sort > "$EXPLICIT_OFFICIAL"
-pacman -Qqem | sort > "$EXPLICIT_FOREIGN" || true
-pacman -Qq | sort > "$ALL_PACKAGES"
-grep -E "installed|removed|upgraded|reinstalled" /var/log/pacman.log | tail -n 160 > "$PACMAN_RECENT" || true
+: "${SNAPSHOT_DIR:?SNAPSHOT_DIR wajib diisi pada konfigurasi}"
 
-EXPLICIT_OFFICIAL_COUNT="$(wc -l < "$EXPLICIT_OFFICIAL")"
-EXPLICIT_FOREIGN_COUNT="$(wc -l < "$EXPLICIT_FOREIGN")"
-ALL_PACKAGES_COUNT="$(wc -l < "$ALL_PACKAGES")"
+if [[ "$SNAPSHOT_DIR" != /* || "$SNAPSHOT_DIR" == "/" ]]; then
+    printf 'SNAPSHOT_DIR harus berupa absolute path yang spesifik.\n' >&2
+    exit 1
+fi
 
-{
-    echo "<!-- AUTO_PACKAGE_REPORT_START -->"
-    echo "## Auto Package Report"
-    echo
-    echo "Generated automatically after pacman transaction."
-    echo
-    echo "### Last Updated"
-    echo
-    echo '```txt'
-    date
-    echo '```'
-    echo
-    echo "### Package Count"
-    echo
-    echo "| Type | Count |"
-    echo "|---|---:|"
-    echo "| Explicit official packages | ${EXPLICIT_OFFICIAL_COUNT} |"
-    echo "| Explicit foreign/AUR packages | ${EXPLICIT_FOREIGN_COUNT} |"
-    echo "| All installed packages including dependencies | ${ALL_PACKAGES_COUNT} |"
-    echo
-    echo "### Explicit Official Packages"
-    echo
-    echo '```txt'
-    cat "$EXPLICIT_OFFICIAL"
-    echo '```'
-    echo
-    echo "### Explicit Foreign / AUR Packages"
-    echo
-    echo '```txt'
-    cat "$EXPLICIT_FOREIGN"
-    echo '```'
-    echo
-    echo "### Recent Pacman Transactions"
-    echo
-    echo '```txt'
-    cat "$PACMAN_RECENT"
-    echo '```'
-    echo
-    echo "### Current Disk Layout"
-    echo
-    echo '```txt'
-    lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS 2>/dev/null || true
-    echo '```'
-    echo
-    echo "### Current Kernel"
-    echo
-    echo '```txt'
-    uname -a
-    echo '```'
-    echo
-    echo "<!-- AUTO_PACKAGE_REPORT_END -->"
-} > "$AUTO_BLOCK"
+SNAPSHOT_DIR="${SNAPSHOT_DIR%/}"
+README="${SNAPSHOT_DIR}/README.md"
 
-if [[ ! -f "$README" ]]; then
-    cat > "$README" <<'README_EOF'
-# Arch Linux KDE Plasma Clean Setup
+if [[ ! -d "${SNAPSHOT_DIR}/.git" || ! -f "$README" ]]; then
+    printf 'SNAPSHOT_DIR harus menunjuk clone Git yang memiliki README.md.\n' >&2
+    exit 1
+fi
 
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf -- "$TEMP_DIR"' EXIT
+
+pacman -Qqen | LC_ALL=C sort > "${TEMP_DIR}/packages-explicit-official.txt"
+pacman -Qqem | LC_ALL=C sort > "${TEMP_DIR}/packages-explicit-foreign.txt" || true
+pacman -Qq | LC_ALL=C sort > "${TEMP_DIR}/packages-all.txt"
+grep -E 'installed|removed|upgraded|reinstalled' /var/log/pacman.log \
+    | tail -n 160 > "${TEMP_DIR}/pacman-recent.log" || true
+
+official_count="$(wc -l < "${TEMP_DIR}/packages-explicit-official.txt")"
+foreign_count="$(wc -l < "${TEMP_DIR}/packages-explicit-foreign.txt")"
+all_count="$(wc -l < "${TEMP_DIR}/packages-all.txt")"
+
+cat > "${TEMP_DIR}/auto-report.md" <<REPORT
 <!-- AUTO_PACKAGE_REPORT_START -->
-Auto package report belum dibuat.
+Snapshot dibuat pada \`$(date --iso-8601=seconds)\`.
+
+| Jenis | Jumlah |
+| --- | ---: |
+| Package resmi eksplisit | ${official_count} |
+| Package asing/AUR eksplisit | ${foreign_count} |
+| Seluruh package | ${all_count} |
+
+Kernel release: \`$(uname -r)\`.
+
+Daftar lengkap tersedia pada file \`packages-*.txt\`; transaksi terbaru tersedia pada \`pacman-recent.log\`. Laporan tidak memasukkan hostname, username, UUID, disk layout, atau mount path.
 <!-- AUTO_PACKAGE_REPORT_END -->
-README_EOF
+REPORT
+
+awk -v block_file="${TEMP_DIR}/auto-report.md" '
+    BEGIN {
+        while ((getline line < block_file) > 0) {
+            block = block line "\n"
+        }
+        close(block_file)
+    }
+    /<!-- AUTO_PACKAGE_REPORT_START -->/ {
+        printf "%s", block
+        skip = 1
+        next
+    }
+    /<!-- AUTO_PACKAGE_REPORT_END -->/ {
+        skip = 0
+        next
+    }
+    skip != 1 { print }
+' "$README" > "${TEMP_DIR}/README.md"
+
+install -m 0644 "${TEMP_DIR}/packages-explicit-official.txt" \
+    "${SNAPSHOT_DIR}/packages-explicit-official.txt"
+install -m 0644 "${TEMP_DIR}/packages-explicit-foreign.txt" \
+    "${SNAPSHOT_DIR}/packages-explicit-foreign.txt"
+install -m 0644 "${TEMP_DIR}/packages-all.txt" \
+    "${SNAPSHOT_DIR}/packages-all.txt"
+install -m 0644 "${TEMP_DIR}/pacman-recent.log" \
+    "${SNAPSHOT_DIR}/pacman-recent.log"
+install -m 0644 "${TEMP_DIR}/README.md" "$README"
+
+if [[ -n "${SNAPSHOT_OWNER:-}" ]]; then
+    chown "$SNAPSHOT_OWNER:" \
+        "$README" \
+        "${SNAPSHOT_DIR}/packages-explicit-official.txt" \
+        "${SNAPSHOT_DIR}/packages-explicit-foreign.txt" \
+        "${SNAPSHOT_DIR}/packages-all.txt" \
+        "${SNAPSHOT_DIR}/pacman-recent.log"
 fi
-
-if grep -q "<!-- AUTO_PACKAGE_REPORT_START -->" "$README" && grep -q "<!-- AUTO_PACKAGE_REPORT_END -->" "$README"; then
-    awk -v block_file="$AUTO_BLOCK" '
-        BEGIN {
-            while ((getline line < block_file) > 0) {
-                block = block line "\n"
-            }
-            close(block_file)
-        }
-        /<!-- AUTO_PACKAGE_REPORT_START -->/ {
-            printf "%s", block
-            skip = 1
-            next
-        }
-        /<!-- AUTO_PACKAGE_REPORT_END -->/ {
-            skip = 0
-            next
-        }
-        skip != 1 {
-            print
-        }
-    ' "$README" > "$TMP_README"
-
-    mv "$TMP_README" "$README"
-else
-    {
-        cat "$README"
-        echo
-        cat "$AUTO_BLOCK"
-    } > "$TMP_README"
-
-    mv "$TMP_README" "$README"
-fi
-
-chown -R "${USER_NAME}:${USER_NAME}" "$DOC_DIR"

@@ -1,0 +1,10 @@
+# Konfigurasi host bersifat lokal
+arch-snapshot.conf
+.env
+.env.*
+
+# Editor dan sistem operasi
+*.swp
+*~
+.DS_Store
+Thumbs.db
