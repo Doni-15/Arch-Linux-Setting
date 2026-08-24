@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_FILE="${ARCH_SNAPSHOT_CONFIG:-/etc/arch-snapshot.conf}"
+LOG_FILE="${ARCH_SNAPSHOT_LOG:-/var/log/arch-snapshot.log}"
+
+log() {
+    local message
+    message="[$(date --iso-8601=seconds)] $*"
+    printf '%s\n' "$message"
+    printf '%s\n' "$message" >> "$LOG_FILE" 2>/dev/null || true
+}
+
+if [[ ! -r "$CONFIG_FILE" ]]; then
+    log "Konfigurasi tidak dapat dibaca: ${CONFIG_FILE}"
+    exit 1
+fi
+
+if [[ "$EUID" -eq 0 ]]; then
+    config_owner="$(stat -c '%u' "$CONFIG_FILE")"
+    config_mode="$(stat -c '%a' "$CONFIG_FILE")"
+
+    if [[ "$config_owner" -ne 0 ]] || (( (8#$config_mode & 8#022) != 0 )); then
+        log 'Konfigurasi harus dimiliki root dan tidak writable oleh group/other.'
+        exit 1
+    fi
+fi
+
+# shellcheck source=/dev/null
+source "$CONFIG_FILE"
+
+: "${SNAPSHOT_DIR:?SNAPSHOT_DIR wajib diisi pada konfigurasi}"
+: "${SNAPSHOT_OWNER:?SNAPSHOT_OWNER wajib diisi pada konfigurasi}"
+SNAPSHOT_BRANCH="${SNAPSHOT_BRANCH:-main}"
+
+if [[ "$SNAPSHOT_DIR" != /* || "$SNAPSHOT_DIR" == "/" ]]; then
+    log 'SNAPSHOT_DIR harus berupa absolute path yang spesifik.'
+    exit 1
+fi
+
+SNAPSHOT_DIR="${SNAPSHOT_DIR%/}"
+
+if [[ ! -d "${SNAPSHOT_DIR}/.git" ]]; then
+    log 'SNAPSHOT_DIR tidak menunjuk clone Git yang valid.'
+    exit 1
+fi
+
+if ! id "$SNAPSHOT_OWNER" >/dev/null 2>&1; then
+    log 'SNAPSHOT_OWNER tidak ditemukan pada sistem.'
+    exit 1
+fi
+
+run_as_owner() {
+    if [[ "$(id -un)" == "$SNAPSHOT_OWNER" ]]; then
+        "$@"
+    elif [[ "$EUID" -eq 0 ]]; then
+        runuser -u "$SNAPSHOT_OWNER" -- "$@"
+    else
+        log 'Script harus dijalankan oleh SNAPSHOT_OWNER atau root.'
+        return 1
+    fi
+}
+
+current_branch="$(run_as_owner git -C "$SNAPSHOT_DIR" branch --show-current)"
+if [[ "$current_branch" != "$SNAPSHOT_BRANCH" ]]; then
+    log "Snapshot dibatalkan: branch aktif bukan ${SNAPSHOT_BRANCH}."
+    exit 1
+fi
+
+/usr/local/bin/update-arch-readme
+
+install -m 0755 /usr/local/bin/update-arch-readme \
+    "${SNAPSHOT_DIR}/scripts/update-arch-readme"
+install -m 0755 /usr/local/bin/update-arch-snapshot \
+    "${SNAPSHOT_DIR}/scripts/update-arch-snapshot"
+install -m 0644 /etc/pacman.d/hooks/99-update-arch-readme.hook \
+    "${SNAPSHOT_DIR}/hooks/99-update-arch-readme.hook"
+
+chown "$SNAPSHOT_OWNER:" \
+    "${SNAPSHOT_DIR}/scripts/update-arch-readme" \
+    "${SNAPSHOT_DIR}/scripts/update-arch-snapshot" \
+    "${SNAPSHOT_DIR}/hooks/99-update-arch-readme.hook"
+
+run_as_owner git -C "$SNAPSHOT_DIR" add -- \
+    README.md \
+    packages-explicit-official.txt \
+    packages-explicit-foreign.txt \
+    packages-all.txt \
+    pacman-recent.log \
+    scripts/update-arch-readme \
+    scripts/update-arch-snapshot \
+    hooks/99-update-arch-readme.hook
+
+if run_as_owner git -C "$SNAPSHOT_DIR" diff --cached --quiet; then
+    log 'Tidak ada perubahan snapshot untuk di-commit.'
+    exit 0
+fi
+
+run_as_owner git -C "$SNAPSHOT_DIR" commit \
+    -m "chore: update sanitized Arch system snapshot"
+
+log 'Snapshot lokal selesai. Review commit sebelum publikasi manual.'

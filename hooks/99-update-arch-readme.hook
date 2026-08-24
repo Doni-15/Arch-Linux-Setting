@@ -6,6 +6,6 @@ Type = Package
 Target = *
 
 [Action]
-Description = Updating Arch README and pushing backup to GitHub...
+Description = Updating sanitized local Arch package snapshot...
 When = PostTransaction
-Exec = /usr/local/bin/update-arch-readme-and-push
+Exec = /usr/local/bin/update-arch-snapshot
