@@ -118,6 +118,8 @@ sddm
 shellcheck
 shfmt
 smartmontools
+snap-pac
+snapper
 sof-firmware
 spectacle
 steam

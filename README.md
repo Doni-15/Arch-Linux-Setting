@@ -136,13 +136,13 @@ sudo /usr/local/bin/update-arch-readme
 File package adalah snapshot satu workstation pada waktu tertentu, bukan daftar package yang wajib dipasang. Daftar eksplisit lebih berguna untuk merekonstruksi intent, sedangkan `packages-all.txt` membantu menelusuri dependency yang terpasang.
 
 <!-- AUTO_PACKAGE_REPORT_START -->
-Snapshot dibuat pada `2026-09-23T13:48:26+07:00`.
+Snapshot dibuat pada `2026-09-23T13:57:00+07:00`.
 
 | Jenis | Jumlah |
 | --- | ---: |
-| Package resmi eksplisit | 157 |
+| Package resmi eksplisit | 159 |
 | Package asing/AUR eksplisit | 0 |
-| Seluruh package | 1214 |
+| Seluruh package | 1216 |
 
 Kernel release: `7.2.6-arch2-1`.
 
