@@ -60,11 +60,11 @@ btop
 btrfs-progs
 bubblewrap
 bzip2
+c-ares
 ca-certificates
 ca-certificates-mozilla
 ca-certificates-utils
 cairo
-c-ares
 cblas
 cdparanoia
 cfitsio
@@ -80,6 +80,8 @@ coreutils
 cpio
 cppdap
 cryptsetup
+cups
+cups-filters
 curl
 dav1d
 db5.3
@@ -111,11 +113,11 @@ ebook-tools
 editorconfig-core-c
 efibootmgr
 efivar
-eglexternalplatform
 egl-gbm
 egl-wayland
 egl-wayland2
 egl-x11
+eglexternalplatform
 elfutils
 ethtool
 exiv2
@@ -142,9 +144,9 @@ freeglut
 freetype2
 fribidi
 ftgl
+fuse-common
 fuse2
 fuse3
-fuse-common
 fwupd
 fwupd-efi
 fzf
@@ -166,9 +168,9 @@ git
 github-cli
 glew
 glfw
+glib-networking
 glib2
 glibc
-glib-networking
 glm
 glslang
 glu
@@ -197,9 +199,9 @@ gst-plugins-base
 gst-plugins-base-libs
 gstreamer
 gtest
+gtk-update-icon-cache
 gtk3
 gtk4
-gtk-update-icon-cache
 guile
 gumbo-parser
 gupnp
@@ -262,6 +264,7 @@ haskell-uuid-types
 haskell-vector
 haskell-vector-stream
 haskell-witherable
+hdf5
 hexedit
 hicolor-icon-theme
 hidapi
@@ -291,13 +294,13 @@ java-environment-common
 java-runtime-common
 jbig2dec
 jbigkit
-jdk17-openjdk
 jdk-openjdk
+jdk17-openjdk
 jemalloc
 jq
 json-c
-jsoncpp
 json-glib
+jsoncpp
 kaccounts-integration
 kactivitymanagerd
 karchive
@@ -315,8 +318,8 @@ kconfigwidgets
 kcoreaddons
 kcrash
 kdbusaddons
-kdeclarative
 kde-cli-tools
+kdeclarative
 kdecoration
 kded
 kdesu
@@ -375,6 +378,7 @@ kwidgetsaddons
 kwin
 kwindowsystem
 kxmlgui
+l-smash
 lame
 lapack
 layer-shell-qt
@@ -474,6 +478,7 @@ libabw
 libaccounts-glib
 libaccounts-qt
 libadwaita
+libaec
 libarchive
 libasan
 libass
@@ -506,10 +511,12 @@ libcap
 libcap-ng
 libcddb
 libcdr
+libcgif
 libcloudproviders
 libcmis
 libcolord
 libcups
+libcupsfilters
 libdaemon
 libdatrie
 libdc1394
@@ -523,8 +530,8 @@ libdrm
 libdvbpsi
 libdvdnav
 libdvdread
-libebml
 libe-book
+libebml
 libebur128
 libedit
 libei
@@ -534,6 +541,7 @@ libepubgen
 libetonyek
 libevdev
 libevent
+libexif
 libexttextcat
 libfdk-aac
 libffi
@@ -580,6 +588,7 @@ libldap
 liblsan
 libmad
 libmakepkg-dropins
+libmatio
 libmatroska
 libmaxminddb
 libmbim
@@ -633,6 +642,7 @@ libplacebo
 libplasma
 libplist
 libpng
+libppd
 libproxy
 libpsl
 libpulse
@@ -692,6 +702,7 @@ libuv
 libva
 libvdpau
 libverto
+libvips
 libvisio
 libvlc
 libvorbis
@@ -746,6 +757,7 @@ lilv
 linux
 linux-api-headers
 linux-firmware
+linux-firmware-amd
 linux-firmware-amdgpu
 linux-firmware-atheros
 linux-firmware-broadcom
@@ -756,6 +768,7 @@ linux-firmware-nvidia
 linux-firmware-other
 linux-firmware-radeon
 linux-firmware-realtek
+linux-firmware-ti
 linux-firmware-whence
 linux-headers
 linux-lts
@@ -766,11 +779,10 @@ live-media
 lldb
 llhttp
 llvm-libs
-lmdb
 lm_sensors
+lmdb
 lpsolve
 lsb-release
-l-smash
 lsof
 ltrace
 lua
@@ -783,8 +795,8 @@ m4
 mailcap
 make
 man-db
-mangohud
 man-pages
+mangohud
 maven
 md4c
 mdadm
@@ -805,8 +817,8 @@ mtdev
 nano
 ncurses
 neon
-nettle
 net-tools
+nettle
 networkmanager
 networkmanager-qt
 nftables
@@ -860,6 +872,7 @@ pciutils
 pcre
 pcre2
 pcsclite
+pdfio
 perl
 perl-archive-zip
 perl-error
@@ -875,7 +888,6 @@ pipewire-audio
 pipewire-pulse
 pixman
 pkgconf
-plasma5support
 plasma-activities
 plasma-activities-stats
 plasma-desktop
@@ -883,6 +895,7 @@ plasma-integration
 plasma-nm
 plasma-pa
 plasma-workspace
+plasma5support
 polkit
 polkit-kde-agent
 polkit-qt6
@@ -891,8 +904,8 @@ poppler-data
 poppler-qt6
 popt
 portaudio
-powerdevil
 power-profiles-daemon
+powerdevil
 ppp
 prison
 procps-ng
@@ -903,10 +916,13 @@ psmisc
 pulseaudio-qt
 purpose
 python
+python-argcomplete
+python-click
 python-colorama
 python-contourpy
 python-cycler
 python-dateutil
+python-distro
 python-fonttools
 python-gobject
 python-kiwisolver
@@ -914,10 +930,13 @@ python-matplotlib
 python-numpy
 python-packaging
 python-pillow
+python-pipx
+python-platformdirs
 python-pyparsing
 python-shtab
 python-six
 python-termcolor
+python-userpath
 qca-qt6
 qcoro
 qhull
@@ -978,10 +997,10 @@ shadow
 shared-mime-info
 shellcheck
 shfmt
-signond
 signon-kwallet-extension
 signon-plugin-oauth2
 signon-ui
+signond
 simdjson
 slang
 smartmontools
@@ -1108,11 +1127,8 @@ vlc-plugin-ogg
 vlc-plugin-opus
 vlc-plugin-png
 vlc-plugin-pulse
-vlc-plugins-all
 vlc-plugin-samplerate
-vlc-plugins-base
 vlc-plugin-sdl
-vlc-plugins-extra
 vlc-plugin-sftp
 vlc-plugin-shout
 vlc-plugin-smb
@@ -1120,8 +1136,6 @@ vlc-plugin-soxr
 vlc-plugin-speex
 vlc-plugin-srt
 vlc-plugin-svg
-vlc-plugins-video-output
-vlc-plugins-visualization
 vlc-plugin-tag
 vlc-plugin-theora
 vlc-plugin-twolame
@@ -1133,6 +1147,11 @@ vlc-plugin-x264
 vlc-plugin-x265
 vlc-plugin-xml
 vlc-plugin-zvbi
+vlc-plugins-all
+vlc-plugins-base
+vlc-plugins-extra
+vlc-plugins-video-output
+vlc-plugins-visualization
 vmaf
 volume_key
 vulkan-icd-loader
@@ -1166,7 +1185,6 @@ xf86-input-libinput
 xkeyboard-config
 xmlsec
 xorg-fonts-encodings
-xorgproto
 xorg-server
 xorg-server-common
 xorg-setxkbmap
@@ -1177,6 +1195,7 @@ xorg-xprop
 xorg-xrandr
 xorg-xrdb
 xorg-xwayland
+xorgproto
 xvidcore
 xxhash
 xz

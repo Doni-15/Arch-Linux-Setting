@@ -136,7 +136,17 @@ sudo /usr/local/bin/update-arch-readme
 File package adalah snapshot satu workstation pada waktu tertentu, bukan daftar package yang wajib dipasang. Daftar eksplisit lebih berguna untuk merekonstruksi intent, sedangkan `packages-all.txt` membantu menelusuri dependency yang terpasang.
 
 <!-- AUTO_PACKAGE_REPORT_START -->
-Snapshot awal tersedia pada file package dan log yang ditautkan di bagian struktur repository. Jalankan `update-arch-readme` pada host yang sudah dikonfigurasi untuk memperbarui jumlah package dan versi kernel tanpa menyalin hostname, disk layout, atau mount path ke README.
+Snapshot dibuat pada `2026-09-23T13:48:26+07:00`.
+
+| Jenis | Jumlah |
+| --- | ---: |
+| Package resmi eksplisit | 157 |
+| Package asing/AUR eksplisit | 0 |
+| Seluruh package | 1214 |
+
+Kernel release: `7.2.6-arch2-1`.
+
+Daftar lengkap tersedia pada file `packages-*.txt`; transaksi terbaru tersedia pada `pacman-recent.log`. Laporan tidak memasukkan hostname, username, UUID, disk layout, atau mount path.
 <!-- AUTO_PACKAGE_REPORT_END -->
 
 ## Pengujian

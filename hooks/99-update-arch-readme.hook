@@ -6,6 +6,6 @@ Type = Package
 Target = *
 
 [Action]
-Description = Updating sanitized local Arch package snapshot...
+Description = Scheduling sanitized local Arch package snapshot...
 When = PostTransaction
-Exec = /usr/local/bin/update-arch-snapshot
+Exec = /usr/bin/systemctl start --no-block arch-system-snapshot.service

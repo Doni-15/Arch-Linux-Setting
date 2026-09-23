@@ -17,6 +17,8 @@ btop
 btrfs-progs
 clang
 cmake
+cups
+cups-filters
 discord
 docker
 docker-buildx
@@ -45,8 +47,8 @@ gwenview
 hexedit
 htop
 inetutils
-jdk17-openjdk
 jdk-openjdk
+jdk17-openjdk
 jq
 kate
 kde-cli-tools
@@ -70,8 +72,8 @@ linux-lts-headers
 lldb
 ltrace
 man-db
-mangohud
 man-pages
+mangohud
 maven
 mesa
 mesa-utils
@@ -104,8 +106,9 @@ pipewire-pulse
 plasma-desktop
 plasma-nm
 plasma-pa
-powerdevil
 power-profiles-daemon
+powerdevil
+python-pipx
 qt5-declarative
 reflector
 rsync
